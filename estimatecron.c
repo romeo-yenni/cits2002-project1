@@ -2,26 +2,40 @@
 #include <stdio.h>
 
 
+#define MAX_LINES 100
+#define MAX_LEN 100
+
 void file_processing(char *filename) {
+
+	// storage for lines from file
+	static char data[MAX_LINES][MAX_LEN];
+	
 	// open file
 	FILE   *file = fopen(filename, "r");
-
-
+	
 	//  check if file was opened successfully
 	if(file == NULL) {
 		printf( "cannot open file '%s'\n", filename);
 		exit(EXIT_FAILURE);
 	}
 	
-	char    line[BUFSIZ];
+	int line = 0;
 	
-	//  reading each line from file
-	//  stops at end of file or error
-    	while( fgets(line, sizeof line, file) != NULL ) {  
-        	printf("%s", line);
-    	}	
+	// check for EOF or error while reading
+	while (!feof(file) && !ferror(file)) {
+		// check if number of lines < MAX_LINES
+		if (fgets(data[line], MAX_LEN, file) != NULL) {
+			// increment line
+			line++;
+		}
+	}
+	
 	//  close file
 	fclose(file);
+	
+	for (int i=0;i<line;i++) {
+		printf("%s", data[i]);
+	}
 }
 	 
 
@@ -33,11 +47,14 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (argc == 4) {
+		printf("\n");
 		file_processing(argv[2]);
 		printf("\n\n");
 		file_processing(argv[3]);
+		printf("\n");
 		exit(EXIT_SUCCESS);
 	}
+
 	return 0;
 	
 	
