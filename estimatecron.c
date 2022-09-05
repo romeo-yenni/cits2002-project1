@@ -38,7 +38,61 @@ void file_processing(char *filename) {
 	}
 }
 	 
+// A utility function to provide the number of days from the command line month input.
+int getMonthDays(int month) { // Need to provide appropriate parameter
+	if (month == 0)
+		return 31;
+	if (month == 1)
+		return 28;
+	if (month == 2)
+		return 31;
+	if (month == 3)
+		return 30;
+	if (month == 4)
+		return 31;
+	if (month == 5)
+		return 30;
+	if (month == 6)
+		return 31;
+	if (month == 7)
+		return 31;
+	if (month == 8)
+		return 30;
+	if (month == 9)
+		return 31;
+	if (month == 10)
+		return 30;
+	if (month == 11)
+		return 31;	
+}
 
+// A function that will tick through all the days of a given month by second.
+void timeTick(int monthDays) {
+	int d,h,m,s = 0;
+
+	if (h >= 24 || m >= 60 || s >= 60)
+		{
+			printf("This is not a valid time\n");
+			exit(EXIT_FAILURE);
+		}
+	s++;
+	if (s == 60) {
+		m++;
+		s = 0;
+	}
+	if (m == 60) {
+		h++;
+		m =0;
+	}
+	if (h == 24) {
+		d++;
+		h = 0;
+	}
+	if (d > monthDays) {
+		exit(EXIT_SUCCESS)
+	}
+}
+// At the end of each we want to output a string s/m/h/m/d to compare to contents of crontab-file string?
 
 int main(int argc, char *argv[]) {
 
