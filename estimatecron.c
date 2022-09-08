@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 
 #define MAX_LINES 100
@@ -33,8 +34,30 @@ void file_processing(char *filename) {
 	//  close file
 	fclose(file);
 	
+	// clean lines
+	char processes[line][MAX_LEN];
+	
+	int clean_line = 0;
+	
 	for (int i=0;i<line;i++) {
-		printf("%s", data[i]);
+		for (int j = 0; j < MAX_LINES; j++) {
+			if (data[i][j] == ' ') {
+				continue;
+			}
+			else if (data[i][j] == '#') {
+				break;
+			}
+			else if (data[i][j] == '\n') {
+  			        strcpy(processes[clean_line], data[i]);
+				clean_line++;
+			}
+		}
+	}
+	
+	printf("\n\n\n");
+	
+	for (int a = 0; a < clean_line; a++) {
+		printf("%s", processes[a]);
 	}
 }
 	 
@@ -64,11 +87,15 @@ int getMonthDays(int month) { // Need to provide appropriate parameter
 		return 30;
 	if (month == 11)
 		return 31;	
+	return 0;
 }
 
 // A function that will tick through all the days of a given month by second.
 void timeTick(int monthDays) {
-	int d,h,m,s = 0;
+	int d = 0;
+	int h = 0;
+	int m = 0;
+	int s = 0;
 
 	if (h >= 24 || m >= 60 || s >= 60)
 		{
@@ -89,7 +116,7 @@ void timeTick(int monthDays) {
 		h = 0;
 	}
 	if (d > monthDays) {
-		exit(EXIT_SUCCESS)
+		exit(EXIT_SUCCESS);
 	}
 }
 // At the end of each we want to output a string s/m/h/m/d to compare to contents of crontab-file string?
