@@ -6,10 +6,18 @@
 #define MAX_LINES 100
 #define MAX_LEN 100
 
-void file_processing(char *filename) {
+
+struct Process {
+   char  name[40];		// process name
+   char  start_time[15];	// in format: (string) s/m/h/m/d
+   int   estimate;		// process length in minutes
+};
+
+
+struct Process *file_processing(char *filename) {
 
 	// storage for lines from file
-	static char data[MAX_LINES][MAX_LEN];
+	char data[MAX_LINES][MAX_LEN];
 	
 	// open file
 	FILE   *file = fopen(filename, "r");
@@ -35,7 +43,7 @@ void file_processing(char *filename) {
 	fclose(file);
 	
 	// clean lines
-	char processes[line][MAX_LEN];
+	char processes[MAX_LINES][MAX_LEN];
 	
 	int clean_line = 0;
 	
@@ -54,12 +62,71 @@ void file_processing(char *filename) {
 		}
 	}
 	
-	printf("\n\n\n");
-	
-	for (int a = 0; a < clean_line; a++) {
-		printf("%s", processes[a]);
+	char times[clean_line][100];
+	for (int z=0;z<clean_line;z++) {
+  		times[z][0] = '\0';
 	}
+	
+	for (int z=0;z<clean_line;z++) {
+		int x = 0;
+		int space_counter = 0;
+		while ( (processes[z][x] != '\0') && (space_counter < 5) ) {
+			if (processes[z][x] == ' ') {
+				strcat(times[z], "/");
+				space_counter++;
+				x++;
+			}
+			else {
+				strncat(times[z], &processes[z][x], 1);
+				x++;
+			}
+    		}
+    	}
+    	
+    	char names[clean_line][40];
+    	for (int z=0;z<clean_line;z++) {
+    		names[z][0] = '\0';
+    	}
+    	
+	for (int z=0;z<clean_line;z++) {
+		int x = 0;
+		int space_counter = 0;
+		while ( (processes[z][x] != '\n') ) {
+			if (space_counter > 5) {
+				if (processes[z][x] == ' ') {
+					x++;
+					space_counter++;
+					continue;
+				}
+				else {
+					strncat(names[z], &processes[z][x], 1);
+					x++;
+				}
+			}
+			else {
+				if (processes[z][x] == ' ') {
+					x++;
+					space_counter++;
+				}
+				else {
+					x++;
+				}
+			}
+    		}
+    	}
+
+	struct Process *all_proc = malloc(sizeof(struct Process) * clean_line);       
+	
+	for (int i=0;i<clean_line;i++) {
+		strcpy( all_proc[i].name, names[i]);
+		strcpy( all_proc[i].start_time, times[i]);
+		all_proc[i].estimate = 0;
+	}
+		
+	return all_proc;
 }
+
+
 	 
 // A utility function to provide the number of days from the command line month input.
 int getMonthDays(int month) { // Need to provide appropriate parameter
@@ -121,6 +188,7 @@ void timeTick(int monthDays) {
 }
 // At the end of each we want to output a string s/m/h/m/d to compare to contents of crontab-file string?
 
+
 int main(int argc, char *argv[]) {
 
 	if (argc != 4) {
@@ -128,17 +196,29 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (argc == 4) {
+		
 		printf("\n");
-		file_processing(argv[2]);
+		
+		struct Process *all_proc = file_processing(argv[2]); 		
+				
+		for (int i=0;i<5;i++) {
+			printf("##   %s   ##   %s   ##   %i   ##\n\n", all_proc[i].name, 
+							       	       all_proc[i].start_time, 
+						                       all_proc[i].estimate);
+		}
+
+		free(all_proc);
+		
+		//file_processing(argv[2]);
+		
 		printf("\n\n");
-		file_processing(argv[3]);
+		
+		//file_processing(argv[3]);
+		
 		printf("\n");
+	
 		exit(EXIT_SUCCESS);
 	}
 
 	return 0;
-	
-	
-	
-	
 }
