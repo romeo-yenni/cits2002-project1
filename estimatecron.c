@@ -61,41 +61,42 @@ void file_processing(char *filename) {
 	}
 }
 	 
-// A utility function to provide the number of days from the command line month input.
-int getMonthDays(int month) { // Need to provide appropriate parameter
-	if (month == 0)
+// A utility function to provide the number of days from the command line argv[] input.
+int getMonthDays(char *argv[]) {
+	if (argv[1] == 0 || argv[1] == "JAN")
 		return 31;
-	if (month == 1)
+	if (argv[1] == 1 || argv[1] == "FEB")
 		return 28;
-	if (month == 2)
+	if (argv[1] == 2 || argv[1] == "MAR")
 		return 31;
-	if (month == 3)
+	if (argv[1] == 3 || argv[1] == "APR")
 		return 30;
-	if (month == 4)
+	if (argv[1] == 4 || argv[1] == "MAY")
 		return 31;
-	if (month == 5)
+	if (argv[1] == 5 || argv[1] == "JUN")
 		return 30;
-	if (month == 6)
+	if (argv[1] == 6 || argv[1] == "JUL")
 		return 31;
-	if (month == 7)
+	if (argv[1] == 7 || argv[1] == "AUG")
 		return 31;
-	if (month == 8)
+	if (argv[1] == 8 || argv[1] == "SEP")
 		return 30;
-	if (month == 9)
+	if (argv[1] == 9 || argv[1] == "OCT")
 		return 31;
-	if (month == 10)
+	if (argv[1] == 10 || argv[1] == "NOV")
 		return 30;
-	if (month == 11)
+	if (argv[1] == 11 || argv[1] == "DEC")
 		return 31;	
 	return 0;
 }
 
-// A function that will tick through all the days of a given month by second.
+// A function that will tick through all the days of a given month argv[] by second.
 void timeTick(int monthDays) {
 	int d = 0;
 	int h = 0;
 	int m = 0;
 	int s = 0;
+	// need to track days?
 
 	if (h >= 24 || m >= 60 || s >= 60)
 		{
@@ -119,7 +120,23 @@ void timeTick(int monthDays) {
 		exit(EXIT_SUCCESS);
 	}
 }
-// At the end of each we want to output a string s/m/h/m/d to compare to contents of crontab-file string?
+// Combine int values to output string time[] to compare to processes[].
+
+int processChecker(char *time[],char *processes[]) {
+	char current[20];
+	char process[20];
+	int value;
+	value = strcmp(current, process);
+	if (value == 0) {
+		/* process is running. Add 1 to total processes. 
+		Add one to this processCounter. Add to concurrent processes. */
+	}
+	else {
+		// process is not running. continue to next process/time.
+	}
+}
+// loop this process in main for each process string then move to next time.
+// pretty naive, better solution? Just use strcmp() in main()?
 
 int main(int argc, char *argv[]) {
 
@@ -137,8 +154,4 @@ int main(int argc, char *argv[]) {
 	}
 
 	return 0;
-	
-	
-	
-	
 }
