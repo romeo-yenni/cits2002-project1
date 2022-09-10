@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 
 #define MAX_LINES 100
@@ -8,14 +9,23 @@
 
 
 struct Process {
-   char  name[40];		// process name
-   char  start_time[15];	// in format: (string) s/m/h/m/d
-   int   estimate;		// process length in minutes
-   int num_lines;		// number of processes
+	char  name[40];		// process name
+	char  start_time[15];	// in format: (string) s/m/h/m/d
+	int   estimate;		// process length in minutes
+   	int num_lines;		// number of processes
 };
 
+struct Time {
+	int minute;		// 
+	int hour;		// struct to hold all of the
+	int day;		// time and date data.
+	int month;		//
+	int day_of_week;
+	int days_in_month;
+};	
 
-struct Process *file_processing(char *crontab, char *estimates) {
+
+struct Process * file_processing(char *crontab, char *estimates) {
 
 	// storage for lines from file
 	char cron_data[MAX_LINES][MAX_LEN];
@@ -234,76 +244,119 @@ struct Process *file_processing(char *crontab, char *estimates) {
 		
 	return all_proc;
 }
-
-/**
 	 
 // A utility function to provide the number of days from the command line argv[] input.
-int getMonthDays(char *argv[]) {
-	if (argv[1] == 0 || argv[1] == "JAN")
-		return 31;
-	if (argv[1] == 1 || argv[1] == "FEB")
-		return 28;
-	if (argv[1] == 2 || argv[1] == "MAR")
-		return 31;
-	if (argv[1] == 3 || argv[1] == "APR")
-		return 30;
-	if (argv[1] == 4 || argv[1] == "MAY")
-		return 31;
-	if (argv[1] == 5 || argv[1] == "JUN")
-		return 30;
-	if (argv[1] == 6 || argv[1] == "JUL")
-		return 31;
-	if (argv[1] == 7 || argv[1] == "AUG")
-		return 31;
-	if (argv[1] == 8 || argv[1] == "SEP")
-		return 30;
-	if (argv[1] == 9 || argv[1] == "OCT")
-		return 31;
-	if (argv[1] == 10 || argv[1] == "NOV")
-		return 30;
-	if (argv[1] == 11 || argv[1] == "DEC")
-		return 31;	
+int getMonthDays(char *argv, int size) {
+	
+	int num = atoi(argv);
+		
+	// do check for 3 letter abbreviation of month. eg. "feb".
+	if (size == 3) {
+		char str[3];
+		int i = 0;
+		
+		while (argv[i]) { 
+			str[i] = toupper(argv[i]);  
+			i++; 
+	    	}
+	    	
+	    	if (strcmp(str, "JAN") == 0)
+			return 31;
+		else if (strcmp(str, "FEB") == 0)	
+			return 28;		
+		else if (strcmp(str, "MAR") == 0)		
+			return 31;
+		else if (strcmp(str, "APR") == 0)
+			return 30;
+		else if (strcmp(str, "MAY") == 0)
+			return 31;
+		else if (strcmp(str, "JUN") == 0)
+			return 30;
+		else if (strcmp(str, "JUL") == 0)
+			return 31;
+		else if (strcmp(str, "AUG") == 0)
+			return 31;
+		else if (strcmp(str, "SEP") == 0)
+			return 30;
+		else if (strcmp(str, "OCT") == 0)
+			return 31;
+		else if (strcmp(str, "NOV") == 0)
+			return 30;
+		else if (strcmp(str, "DEC") == 0)
+			return 31;
+	}
+	
+	// do check for numerial month. eg. "9".
+	else if ( (size == 1) || (size == 2) ) {
+		if ( (0 > num) || (12 < num) ) {
+			printf("month is not valid");
+			exit(EXIT_FAILURE);
+		}
+		else {
+			switch (num) {          
+			  case 0 :
+			  	return 31;
+			  case 1 :
+			  	return 28;
+			  case 2 :
+			  	return 31;
+			  case 3 :
+			  	return 30;
+			  case 4 :
+			  	return 31;
+			  case 5 :
+			  	return 30;
+			  case 6 :
+			  	return 31;
+			  case 7 :
+			  	return 31;
+			  case 8 :
+			  	return 30;
+			  case 9 :
+			  	return 31;
+			  case 10 :
+			  	return 30;
+			  case 11 :
+			  	return 31;			  	
+			}
+		}
+	}
+			
 	return 0;
 }
 
 // A function that will tick through all the days of a given month argv[] by second.
-void timeTick(int monthDays) {
-	int d = 0;
-	int h = 0;
-	int m = 0;
-	int s = 0;
-	// need to track days?
+struct Time timeTick(struct Time time) {
 
-	if (h >= 24 || m >= 60 || s >= 60)
-		{
-			printf("This is not a valid time\n");
-			exit(EXIT_FAILURE);
-		}
-	s++;
-	if (s == 60) {
-		m++;
-		s = 0;
+	if (time.hour >= 24 || time.minute >= 60) {
+		printf("This is not a valid time\n");
+		exit(EXIT_FAILURE);
 	}
-	if (m == 60) {
-		h++;
-		m =0;
+	
+	time.minute++;
+	
+	if (time.minute == 60) {
+		time.hour++;
+		time.minute = 0;
 	}
-	if (h == 24) {
-		d++;
-		h = 0;
+	if (time.hour == 24) {
+		time.day++;
+		time.hour = 0;
 	}
-	if (d > monthDays) {
+	if (time.day > time.days_in_month) {
 		exit(EXIT_SUCCESS);
 	}
+	
+	return time;
 }
-**/
+
 // Combine int values to output string time[] to compare to processes[].
-/**
+
 int processChecker(char *time[],char *processes[]) {
-	char current[20];
-	char process[20];
+	//char current[20];
+	//char process[20];
 	int value;
-	value = strcmp(current, process);
+	//value = strcmp(current, process);
 	if (value == 0) {
 		//process is running. Add 1 to total processes. 
 		//Add one to this processCounter. Add to concurrent processes.
@@ -311,10 +364,17 @@ int processChecker(char *time[],char *processes[]) {
 	else {
 		// process is not running. continue to next process/time.
 	}
+	
+	return 0;
 }
-**/
+
 // loop this process in main for each process string then move to next time.
 // pretty naive, better solution? Just use strcmp() in main()?
+
+
+int get_day_of_week(int d, int m, int y) {
+	return (d += m < 3 ? y-- : y - 2, 23*m/9 + d + 4 + y/4- y/100 + y/400)%7;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -324,6 +384,9 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (argc == 4) {
+	
+		int num_days = getMonthDays(argv[1], strlen(argv[1]));
+		printf("\nnumber of days: %i\n", num_days);
 		
 		printf("\n");
 		
@@ -335,7 +398,50 @@ int main(int argc, char *argv[]) {
 						                                 all_proc[i].estimate,
 						                                 all_proc[i].num_lines);
 		}
+		
+		struct Time time;
+		
+		time.minute = 0;
+		time.hour = 0;
+		time.day = 1;
+		time.month = atoi(argv[1]);
+				
+		for (int i=0;i<(42823);i++) {
+			time = timeTick(time);
+		}
+				
+		time.day_of_week = get_day_of_week(time.day, atoi(argv[1])+1, 2022);
 
+		time.days_in_month = num_days;
+					      
+		char time_str[20] = "\0";
+	
+		char minute_str[3] = "\0";
+		char hour_str[3] = "\0";
+		char day_str[3] = "\0";
+		char month_str[3] = "\0";
+		char day_of_the_week_str[3] = "\0";
+		
+		
+		sprintf(minute_str, "%d", time.minute);
+		sprintf(hour_str, "%d", time.hour);
+		sprintf(day_str, "%d", time.day);
+		strcat(month_str, argv[1]);
+		sprintf(day_of_the_week_str, "%d", time.day_of_week);
+		
+		strcat(time_str, minute_str);
+		strcat(time_str, "/");
+		strcat(time_str, hour_str);
+		strcat(time_str, "/");
+		strcat(time_str, day_str);
+		strcat(time_str, "/");
+		strcat(time_str, month_str);
+		strcat(time_str, "/");
+		strcat(time_str, day_of_the_week_str);
+		strcat(time_str, "/");
+		
+		printf("\n%s\n", time_str);
+		
 		free(all_proc);
 	
 		exit(EXIT_SUCCESS);
