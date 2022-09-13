@@ -8,12 +8,14 @@
 #define MAX_LEN 100
 
 
-struct Process {
-	char  name[40];		// process name
-	char  start_time[15];	// in format: (string) s/m/h/m/d
-	int   estimate;		// process length in minutes
-   	int num_lines;		// number of processes
+struct Time_proc {
+	char minute[50];	// 
+	char hour[50];		// struct to hold all of the
+	char day[50];		// time and date data when reading
+	char month[50];		// from strings.
+	char day_of_week[50];	//
 };
+
 
 struct Time {
 	int minute;		// 
@@ -22,8 +24,15 @@ struct Time {
 	int month;		//
 	int day_of_week;
 	int days_in_month;
-};	
+};
 
+struct Process {
+	char  name[40];			// process name
+	int   estimate;			// process length in minutes
+   	int num_lines;			// number of processes
+	struct Time_proc time_str;	// holding minutes, hours, day, month, day of week, days in month
+	int num_calls;			// number of times process is invoked
+};
 
 struct Process * file_processing(char *crontab, char *estimates) {
 
@@ -77,7 +86,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 	for (int z=0;z<cron_clean_line;z++) {
   		cron_times[z][0] = '\0';
 	}
-	
+
 	for (int z=0;z<cron_clean_line;z++) {
 		int x = 0;
 		int space_counter = 0;
@@ -226,14 +235,70 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		}
 	}
 
-	struct Process *all_proc = malloc(sizeof(struct Process) * cron_clean_line);       
+	struct Process *all_proc = malloc(sizeof(struct Process) * cron_clean_line);
 	
 	for (int i=0;i<cron_clean_line;i++) {
 		strcpy( all_proc[i].name, cron_names[i]);
-		strcpy( all_proc[i].start_time, cron_times[i]);
 		all_proc[i].num_lines = cron_clean_line;
+		all_proc[i].num_calls = 0;
 	}
 	
+	
+	for (int i=0;i<cron_clean_line;i++) {
+		all_proc[i].time_str.minute[0] = '\0';
+		all_proc[i].time_str.hour[0] = '\0';
+		all_proc[i].time_str.day[0] = '\0';
+		all_proc[i].time_str.month[0] = '\0';
+		all_proc[i].time_str.day_of_week[0] = '\0';
+	}
+		
+	
+	for (int i=0;i<cron_clean_line;i++) {
+		char str[100];
+		strcpy( str, cron_times[i]);
+		
+		char *ptr = strtok(str, "/");
+		for (int j=0;j<strlen(ptr);j++) {
+			strncat(all_proc[i].time_str.minute, &ptr[j], 1);
+		} 
+		int slash = 1;
+
+		while(ptr != NULL && slash <= 4) {
+			if (slash==1) {
+
+				slash++;
+				ptr = strtok(NULL, "/");
+				for (int z=0;z<strlen(ptr);z++) {
+					strncat(all_proc[i].time_str.hour, &ptr[z], 1);
+				}
+			}
+			else if (slash==2) {
+
+				slash++;
+				ptr = strtok(NULL, "/");
+				for (int z=0;z<strlen(ptr);z++) {
+					strncat(all_proc[i].time_str.day, &ptr[z], 1);
+				}
+			}
+			else if (slash==3) {
+
+				slash++;
+				ptr = strtok(NULL, "/");
+				for (int z=0;z<strlen(ptr);z++) {
+					strncat(all_proc[i].time_str.month, &ptr[z], 1);
+				}
+			}
+			else if (slash==4) {
+
+				slash++;
+				ptr = strtok(NULL, "/");
+				for (int z=0;z<strlen(ptr);z++) {
+					strncat(all_proc[i].time_str.day_of_week, &ptr[z], 1);
+				}	
+			}
+		}
+	}
+		
 	for (int i=0;i<cron_clean_line;i++) {
 		for (int j=0;j<esti_clean_line;j++) {
 			if (strcmp(all_proc[i].name, esti_names[j]) == 0) {
@@ -241,7 +306,21 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
 		}
 	}
-		
+	
+	int p=5;
+	while ( (p>(cron_clean_line)-1) && (p<440) ) {
+		strcpy(all_proc[p].name, "0");
+		all_proc[p].estimate = 0;
+		all_proc[p].num_lines = 0;
+		strcpy(all_proc[p].time_str.minute, "0");		
+		strcpy(all_proc[p].time_str.hour, "0");
+		strcpy(all_proc[p].time_str.day, "0");
+		strcpy(all_proc[p].time_str.month, "0");
+		strcpy(all_proc[p].time_str.day_of_week, "0");
+		all_proc[p].num_calls = 0;
+		p++;
+	}
+	
 	return all_proc;
 }
 	 
@@ -325,6 +404,10 @@ int getMonthDays(char *argv, int size) {
 	return 0;
 }
 
+int get_day_of_week(int d, int m, int y) {
+	return (d += m < 3 ? y-- : y - 2, 23*m/9 + d + 4 + y/4- y/100 + y/400)%7;
+}
+
 // A function that will tick through all the days of a given month argv[] by second.
 struct Time timeTick(struct Time time) {
 
@@ -346,6 +429,8 @@ struct Time timeTick(struct Time time) {
 	if (time.day > time.days_in_month) {
 		exit(EXIT_SUCCESS);
 	}
+	
+	time.day_of_week = get_day_of_week(time.day, time.month+1, 2022);
 	
 	return time;
 }
@@ -371,10 +456,109 @@ int processChecker(char *time[],char *processes[]) {
 // loop this process in main for each process string then move to next time.
 // pretty naive, better solution? Just use strcmp() in main()?
 
+struct Process * text_to_num(struct Process *processes) {
+	
+	for (int i=0;i<processes[i].num_lines;i++) {
+		
+		int size = strlen(processes[i].time_str.month);
+		
+		if (size == 3) {
+			
+			if (strcmp(processes[i].time_str.month, "jan") == 0)
+				strcpy(processes[i].time_str.month, "0");
+			else if (strcmp(processes[i].time_str.month, "feb") == 0)	
+				strcpy(processes[i].time_str.month, "1");		
+			else if (strcmp(processes[i].time_str.month, "mar") == 0)		
+				strcpy(processes[i].time_str.month, "2");
+			else if (strcmp(processes[i].time_str.month, "apr") == 0)
+				strcpy(processes[i].time_str.month, "3");
+			else if (strcmp(processes[i].time_str.month, "may") == 0)
+				strcpy(processes[i].time_str.month, "4");
+			else if (strcmp(processes[i].time_str.month, "jun") == 0)
+				strcpy(processes[i].time_str.month, "5");
+			else if (strcmp(processes[i].time_str.month, "jul") == 0)
+				strcpy(processes[i].time_str.month, "6");
+			else if (strcmp(processes[i].time_str.month, "aug") == 0)
+				strcpy(processes[i].time_str.month, "7");
+			else if (strcmp(processes[i].time_str.month, "sep") == 0)
+				strcpy(processes[i].time_str.month, "8");
+			else if (strcmp(processes[i].time_str.month, "oct") == 0)
+				strcpy(processes[i].time_str.month, "9");
+			else if (strcmp(processes[i].time_str.month, "nov") == 0)
+				strcpy(processes[i].time_str.month, "10");
+			else if (strcmp(processes[i].time_str.month, "dec") == 0)
+				strcpy(processes[i].time_str.month, "11");
+		}
+	}
+	
+	for (int i=0;i<processes[i].num_lines;i++) {
+		
+		int size = strlen(processes[i].time_str.day_of_week);
+		
+		if (size == 3) {
 
-int get_day_of_week(int d, int m, int y) {
-	return (d += m < 3 ? y-- : y - 2, 23*m/9 + d + 4 + y/4- y/100 + y/400)%7;
+			if (strcmp(processes[i].time_str.day_of_week, "sun") == 0)
+				strcpy(processes[i].time_str.day_of_week, "0");
+			else if (strcmp(processes[i].time_str.day_of_week, "mon") == 0)	
+				strcpy(processes[i].time_str.day_of_week, "1");		
+			else if (strcmp(processes[i].time_str.day_of_week, "tue") == 0)		
+				strcpy(processes[i].time_str.day_of_week, "2");
+			else if (strcmp(processes[i].time_str.day_of_week, "wed") == 0)
+				strcpy(processes[i].time_str.day_of_week, "3");
+			else if (strcmp(processes[i].time_str.day_of_week, "thu") == 0)
+				strcpy(processes[i].time_str.day_of_week, "4");
+			else if (strcmp(processes[i].time_str.day_of_week, "fri") == 0)
+				strcpy(processes[i].time_str.day_of_week, "5");
+			else if (strcmp(processes[i].time_str.day_of_week, "sat") == 0)
+				strcpy(processes[i].time_str.day_of_week, "6");
+		}
+	}
+	
+	return processes;
 }
+
+
+struct Process * number_of_calls(struct Time time, struct Process *processes) {
+
+	for (int i=0;i<processes[i].num_lines;i++) {
+	
+		if (strcmp(processes[i].name, "0") != 0 ) {
+		
+			if ( (time.day_of_week == atoi(processes[i].time_str.day_of_week)) || strcmp(processes[i].time_str.day_of_week, "*") == 0) {
+			
+				if ( (time.month == atoi(processes[i].time_str.month)) || strcmp(processes[i].time_str.month, "*") == 0) {
+				
+					if ( (time.day == atoi(processes[i].time_str.day)) || (strcmp(processes[i].time_str.day, "*") == 0) ) {
+					
+						if ( (time.hour == atoi(processes[i].time_str.hour)) || (strcmp(processes[i].time_str.hour, "*") == 0) ) {
+						
+							if ( (time.minute == atoi(processes[i].time_str.minute)) || (strcmp(processes[i].time_str.minute, "*") == 0) ) {
+								
+								processes[i].num_calls++;	
+								/**
+								printf("\n %i, %i, %i, %i, %i  //  %s, %s, %s, %s, %s  --  %s\n", time.minute, 
+															  time.hour, 
+															  time.day,
+															  time.month, 
+															  time.day_of_week,
+															  processes[i].time_str.minute,
+															  processes[i].time_str.hour,
+															  processes[i].time_str.day,
+															  processes[i].time_str.month,
+															  processes[i].time_str.day_of_week,
+															  processes[i].name);
+								**/
+							}
+						}
+					}						  
+				}
+			}
+		}
+	}
+	
+	return processes;
+}
+	
 
 
 int main(int argc, char *argv[]) {
@@ -386,61 +570,48 @@ int main(int argc, char *argv[]) {
 	if (argc == 4) {
 	
 		int num_days = getMonthDays(argv[1], strlen(argv[1]));
-		printf("\nnumber of days: %i\n", num_days);
-		
-		printf("\n");
 		
 		struct Process *all_proc = file_processing(argv[2], argv[3]); 		
-				
-		for (int i=0;i<all_proc[i].num_lines;i++) {
-			printf("##   %s   ##   %s   ##   %i   ##   %i   ##\n\n", all_proc[i].name, 
-							       	                 all_proc[i].start_time, 
-						                                 all_proc[i].estimate,
-						                                 all_proc[i].num_lines);
-		}
 		
+		all_proc = text_to_num(all_proc);
+
 		struct Time time;
 		
 		time.minute = 0;
 		time.hour = 0;
 		time.day = 1;
 		time.month = atoi(argv[1]);
-				
-		for (int i=0;i<(42823);i++) {
-			time = timeTick(time);
-		}
-				
-		time.day_of_week = get_day_of_week(time.day, atoi(argv[1])+1, 2022);
-
 		time.days_in_month = num_days;
-					      
-		char time_str[20] = "\0";
-	
-		char minute_str[3] = "\0";
-		char hour_str[3] = "\0";
-		char day_str[3] = "\0";
-		char month_str[3] = "\0";
-		char day_of_the_week_str[3] = "\0";
 		
 		
-		sprintf(minute_str, "%d", time.minute);
-		sprintf(hour_str, "%d", time.hour);
-		sprintf(day_str, "%d", time.day);
-		strcat(month_str, argv[1]);
-		sprintf(day_of_the_week_str, "%d", time.day_of_week);
+				
+		for (int i=0;i<((num_days*24*60)-1);i++) {
+			time = timeTick(time);
+
+			all_proc = number_of_calls(time, all_proc);
+			
+			if (time.minute==59 && time.hour==59 && time.day==num_days) {
+				break;
+			}
+		}
 		
-		strcat(time_str, minute_str);
-		strcat(time_str, "/");
-		strcat(time_str, hour_str);
-		strcat(time_str, "/");
-		strcat(time_str, day_str);
-		strcat(time_str, "/");
-		strcat(time_str, month_str);
-		strcat(time_str, "/");
-		strcat(time_str, day_of_the_week_str);
-		strcat(time_str, "/");
+		int total_invoked = 0;
 		
-		printf("\n%s\n", time_str);
+		char most_calls[100] = "\0";
+		
+		int max = 0;
+		
+		for (int i=0;i<all_proc[i].num_lines;i++) {
+		
+			total_invoked = total_invoked + all_proc[i].num_calls;
+			
+			if (all_proc[i].num_calls > max) {
+				strcpy(most_calls, all_proc[i].name);
+				max = all_proc[i].num_calls;
+			}
+		}
+		
+		printf("\n%s	%i	'most concurrent processes'\n", most_calls, total_invoked);
 		
 		free(all_proc);
 	
