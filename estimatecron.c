@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 
 #define MAX_LINES 100
@@ -27,7 +28,7 @@ struct Time {
 };
 
 struct Process {
-	char  name[40];			// process name
+	char  name[40];		// process name
 	int   estimate;			// process length in minutes
    	int num_lines;			// number of processes
 	struct Time_proc time_str;	// holding minutes, hours, day, month, day of week, days in month
@@ -91,10 +92,19 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		int x = 0;
 		int space_counter = 0;
 		while ( (cron_processes[z][x] != '\0') && (space_counter < 5) ) {
-			if (cron_processes[z][x] == ' ') {
-				strcat(cron_times[z], "/");
-				space_counter++;
-				x++;
+			if ( (cron_processes[z][x] == ' ') || (cron_processes[z][x] == '\t') ) {
+				if (x==0) {
+					x++;
+					continue;
+				}
+				else if ( (cron_processes[z][x-1] != ' ') && (cron_processes[z][x-1] != '\t') ) {
+					strcat(cron_times[z], "/");
+					space_counter++;
+					x++;
+				}
+				else if ( (cron_processes[z][x-1] == ' ' ) || (cron_processes[z][x-1] == '\t') ) {
+					x++;
+				}
 			}
 			else {
 				strncat(cron_times[z], &cron_processes[z][x], 1);
@@ -102,7 +112,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
     		}
     	}
-    	
+	    	
     	char cron_names[cron_clean_line][40];
     	for (int z=0;z<cron_clean_line;z++) {
     		cron_names[z][0] = '\0';
@@ -112,11 +122,15 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		int x = 0;
 		int space_counter = 0;
 		while ( (cron_processes[z][x] != '\n') ) {
-			if (space_counter > 5) {
-				if (cron_processes[z][x] == ' ') {
-					x++;
-					space_counter++;
-					continue;
+			if (space_counter == 5) {
+				if ( (cron_processes[z][x] == ' ') || (cron_processes[z][x] == '\t') ) {
+					if ( (cron_processes[z][x-1] != ' ') && (cron_processes[z][x-1] != '\t') ) {
+						space_counter++;
+						x++;
+					}
+					else {
+						x++;
+					}
 				}
 				else {
 					strncat(cron_names[z], &cron_processes[z][x], 1);
@@ -124,9 +138,18 @@ struct Process * file_processing(char *crontab, char *estimates) {
 				}
 			}
 			else {
-				if (cron_processes[z][x] == ' ') {
-					x++;
-					space_counter++;
+				if ( (cron_processes[z][x] == ' ') || (cron_processes[z][x] == '\t') ) {
+					if (x==0) {
+						x++;
+						continue;
+					}
+					else if ( (cron_processes[z][x-1] != ' ') && (cron_processes[z][x-1] != '\t') ) {
+						space_counter++;
+						x++;
+					}
+					else if ( (cron_processes[z][x-1] == ' ' ) || (cron_processes[z][x-1] == '\t') ) {
+						x++;
+					}
 				}
 				else {
 					x++;
@@ -193,7 +216,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		int x = 0;
 		int space_counter = 0;
 		while ( (space_counter < 1) ) {
-			if (esti_processes[z][x] == ' ') {
+			if ( (esti_processes[z][x] == ' ') || (esti_processes[z][x] == '\t') ) {
 				x++;
 				space_counter++;
 			}
@@ -214,9 +237,14 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		int space_counter = 0;
 		while ( (esti_processes[z][x] != '\n') ) {
 			if (space_counter >= 1) {
-				if (esti_processes[z][x] == ' ') {
-					x++;
-					space_counter++;
+				if ( (esti_processes[z][x] == ' ') || (esti_processes[z][x] == '\t') ) {
+					if ( (esti_processes[z][x-1] != ' ') && (esti_processes[z][x-1] != '\t') ) {
+						space_counter++;
+						x++;
+					}
+					else {
+						x++;
+					}
 				}
 				else {
 					strncat(esti_times[z], &esti_processes[z][x], 1);
@@ -224,9 +252,14 @@ struct Process * file_processing(char *crontab, char *estimates) {
 				}
 			}
 			else {
-				if (esti_processes[z][x] == ' ') {
-					x++;
-					space_counter++;
+				if ( (esti_processes[z][x] == ' ') || (esti_processes[z][x] == '\t') ) {
+					if ( (esti_processes[z][x-1] != ' ') && (esti_processes[z][x-1] != '\t') ) {
+						space_counter++;
+						x++;
+					}
+					else {
+						x++;
+					}
 				}
 				else {
 					x++;
@@ -241,6 +274,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		strcpy( all_proc[i].name, cron_names[i]);
 		all_proc[i].num_lines = cron_clean_line;
 		all_proc[i].num_calls = 0;
+		all_proc[i].estimate = 0;
 	}
 	
 	
@@ -297,7 +331,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 				}	
 			}
 		}
-	}
+	}	
 		
 	for (int i=0;i<cron_clean_line;i++) {
 		for (int j=0;j<esti_clean_line;j++) {
@@ -307,8 +341,15 @@ struct Process * file_processing(char *crontab, char *estimates) {
 		}
 	}
 	
+	for (int i=0;i<cron_clean_line;i++) {
+		if (all_proc[i].estimate == 0) {
+			printf("\n'%s' is an unknown command\n", all_proc[i].name);
+			exit(EXIT_FAILURE);
+		}
+	}
+	
 	int p=5;
-	while ( (p>(cron_clean_line)-1) && (p<440) ) {
+	while ( (p>(cron_clean_line)-1) && (p<400) ) {
 		strcpy(all_proc[p].name, "0");
 		all_proc[p].estimate = 0;
 		all_proc[p].num_lines = 0;
@@ -328,76 +369,115 @@ struct Process * file_processing(char *crontab, char *estimates) {
 int getMonthDays(char *argv, int size) {
 	
 	int num = atoi(argv);
-		
-	// do check for 3 letter abbreviation of month. eg. "feb".
-	if (size == 3) {
-		char str[3];
-		int i = 0;
-		
-		while (argv[i]) { 
-			str[i] = toupper(argv[i]);  
-			i++; 
-	    	}
-	    	
-	    	if (strcmp(str, "JAN") == 0)
-			return 31;
-		else if (strcmp(str, "FEB") == 0)	
-			return 28;		
-		else if (strcmp(str, "MAR") == 0)		
-			return 31;
-		else if (strcmp(str, "APR") == 0)
-			return 30;
-		else if (strcmp(str, "MAY") == 0)
-			return 31;
-		else if (strcmp(str, "JUN") == 0)
-			return 30;
-		else if (strcmp(str, "JUL") == 0)
-			return 31;
-		else if (strcmp(str, "AUG") == 0)
-			return 31;
-		else if (strcmp(str, "SEP") == 0)
-			return 30;
-		else if (strcmp(str, "OCT") == 0)
-			return 31;
-		else if (strcmp(str, "NOV") == 0)
-			return 30;
-		else if (strcmp(str, "DEC") == 0)
-			return 31;
+	
+	bool isChar = false;
+	
+	bool isUp = false;
+	
+	bool isNum = false;
+
+	for (int i=0;i<size;i++) {
+		if (isalpha(argv[i]) != 0) {
+			isChar = true;
+		}
+		if (isupper(argv[i]) != 0) {
+			isUp = true;
+		}
+		if (isdigit(argv[i]) != 0) {
+			isNum = true;
+		}
+	}
+
+	if (isUp==true) {
+		printf("\n'%s' is an invalid month\n", argv);
+		exit(EXIT_FAILURE);
+	}
+	if ( (isNum==true) && (isChar==true) ) {
+		printf("\n'%s' is an invalid month\n", argv);
+		exit(EXIT_FAILURE);
 	}
 	
-	// do check for numerial month. eg. "9".
-	else if ( (size == 1) || (size == 2) ) {
-		if ( (0 > num) || (12 < num) ) {
-			printf("month is not valid");
-			exit(EXIT_FAILURE);
+	if (isChar==true) {
+
+		// do check for 3 letter abbreviation of month. eg. "feb".
+		if (size == 3) {
+			char str[3];
+			int i = 0;
+			
+			while (argv[i]) { 
+				str[i] = toupper(argv[i]);  
+				i++; 
+		    	}
+		    	
+		    	if (strcmp(str, "JAN") == 0)
+				return 31;
+			else if (strcmp(str, "FEB") == 0)	
+				return 28;		
+			else if (strcmp(str, "MAR") == 0)		
+				return 31;
+			else if (strcmp(str, "APR") == 0)
+				return 30;
+			else if (strcmp(str, "MAY") == 0)
+				return 31;
+			else if (strcmp(str, "JUN") == 0)
+				return 30;
+			else if (strcmp(str, "JUL") == 0)
+				return 31;
+			else if (strcmp(str, "AUG") == 0)
+				return 31;
+			else if (strcmp(str, "SEP") == 0)
+				return 30;
+			else if (strcmp(str, "OCT") == 0)
+				return 31;
+			else if (strcmp(str, "NOV") == 0)
+				return 30;
+			else if (strcmp(str, "DEC") == 0)
+				return 31;
 		}
 		else {
-			switch (num) {          
-			  case 0 :
-			  	return 31;
-			  case 1 :
-			  	return 28;
-			  case 2 :
-			  	return 31;
-			  case 3 :
-			  	return 30;
-			  case 4 :
-			  	return 31;
-			  case 5 :
-			  	return 30;
-			  case 6 :
-			  	return 31;
-			  case 7 :
-			  	return 31;
-			  case 8 :
-			  	return 30;
-			  case 9 :
-			  	return 31;
-			  case 10 :
-			  	return 30;
-			  case 11 :
-			  	return 31;			  	
+			printf("\n'%s' is an invalid month\n", argv);
+			exit(EXIT_FAILURE);
+		}
+	}
+	else {
+		// do check for numerial month. eg. "9".
+		if ( (size == 1) || (size == 2) ) {
+			if ( (0 > num) || (11 < num) ) {
+				printf("\n'%i' is an invalid month\n", num);
+				exit(EXIT_FAILURE);
 			}
+			else {
+				switch (num) {          
+				  case 0 :
+				  	return 31;
+				  case 1 :
+				  	return 28;
+				  case 2 :
+				  	return 31;
+				  case 3 :
+				  	return 30;
+				  case 4 :
+				  	return 31;
+				  case 5 :
+				  	return 30;
+				  case 6 :
+				  	return 31;
+				  case 7 :
+				  	return 31;
+				  case 8 :
+				  	return 30;
+				  case 9 :
+				  	return 31;
+				  case 10 :
+				  	return 30;
+				  case 11 :
+				  	return 31;			  	
+				}
+			}
+		}
+		else {
+			printf("\n'%s' is an invalid month\n", argv);
+			exit(EXIT_FAILURE);
 		}
 	}
 			
@@ -435,34 +515,13 @@ struct Time timeTick(struct Time time) {
 	return time;
 }
 
-// Combine int values to output string time[] to compare to processes[].
-
-int processChecker(char *time[],char *processes[]) {
-	//char current[20];
-	//char process[20];
-	int value;
-	//value = strcmp(current, process);
-	if (value == 0) {
-		//process is running. Add 1 to total processes. 
-		//Add one to this processCounter. Add to concurrent processes.
-	}
-	else {
-		// process is not running. continue to next process/time.
-	}
-	
-	return 0;
-}
-
-// loop this process in main for each process string then move to next time.
-// pretty naive, better solution? Just use strcmp() in main()?
-
 struct Process * text_to_num(struct Process *processes) {
 	
 	for (int i=0;i<processes[i].num_lines;i++) {
 		
 		int size = strlen(processes[i].time_str.month);
 		
-		if (size == 3) {
+		if (size >= 3) {
 			
 			if (strcmp(processes[i].time_str.month, "jan") == 0)
 				strcpy(processes[i].time_str.month, "0");
@@ -488,6 +547,11 @@ struct Process * text_to_num(struct Process *processes) {
 				strcpy(processes[i].time_str.month, "10");
 			else if (strcmp(processes[i].time_str.month, "dec") == 0)
 				strcpy(processes[i].time_str.month, "11");
+			
+			else {
+				printf("\n'%s' is an invalid month\n", processes[i].time_str.month);
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 	
@@ -495,7 +559,7 @@ struct Process * text_to_num(struct Process *processes) {
 		
 		int size = strlen(processes[i].time_str.day_of_week);
 		
-		if (size == 3) {
+		if (size >= 3) {
 
 			if (strcmp(processes[i].time_str.day_of_week, "sun") == 0)
 				strcpy(processes[i].time_str.day_of_week, "0");
@@ -511,6 +575,11 @@ struct Process * text_to_num(struct Process *processes) {
 				strcpy(processes[i].time_str.day_of_week, "5");
 			else if (strcmp(processes[i].time_str.day_of_week, "sat") == 0)
 				strcpy(processes[i].time_str.day_of_week, "6");
+			
+			else {
+				printf("\n'%s' is an invalid day of the week\n", processes[i].time_str.day_of_week);
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 	
@@ -534,20 +603,7 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 						
 							if ( (time.minute == atoi(processes[i].time_str.minute)) || (strcmp(processes[i].time_str.minute, "*") == 0) ) {
 								
-								processes[i].num_calls++;	
-								/**
-								printf("\n %i, %i, %i, %i, %i  //  %s, %s, %s, %s, %s  --  %s\n", time.minute, 
-															  time.hour, 
-															  time.day,
-															  time.month, 
-															  time.day_of_week,
-															  processes[i].time_str.minute,
-															  processes[i].time_str.hour,
-															  processes[i].time_str.day,
-															  processes[i].time_str.month,
-															  processes[i].time_str.day_of_week,
-															  processes[i].name);
-								**/
+								processes[i].num_calls++;
 							}
 						}
 					}						  
@@ -558,7 +614,42 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 	
 	return processes;
 }
+
+void time_error(struct Process *processes) {
+
+	for (int i=0;i<processes[i].num_lines;i++) {
 	
+		if ( ( 0 > atoi(processes[i].time_str.minute) || atoi(processes[i].time_str.minute) > 59) && (strcmp(processes[i].time_str.minute, "*") != 0) ) {
+			printf("\n'%s' is an invalid minute\n", processes[i].time_str.minute);
+			exit(EXIT_FAILURE);
+		}
+		if ( ( 0 > atoi(processes[i].time_str.hour) || atoi(processes[i].time_str.hour) > 23) && (strcmp(processes[i].time_str.hour, "*") != 0) ) {
+			printf("\n'%s' is an invalid hour\n", processes[i].time_str.hour);
+			exit(EXIT_FAILURE);
+		}
+		if ( ( 1 > atoi(processes[i].time_str.day) || atoi(processes[i].time_str.day) > 31) && (strcmp(processes[i].time_str.day, "*") != 0) ) {
+			printf("\n'%s' is an invalid day\n", processes[i].time_str.day);
+			exit(EXIT_FAILURE);
+		}
+		if ( ( 0 > atoi(processes[i].time_str.month) || atoi(processes[i].time_str.month) > 11) && (strcmp(processes[i].time_str.month, "*") != 0) ) {
+			printf("\n'%s' is an invalid month\n", processes[i].time_str.month);
+			exit(EXIT_FAILURE);
+		}
+		if ( ( 0 > atoi(processes[i].time_str.day_of_week) || atoi(processes[i].time_str.day_of_week) > 6) && (strcmp(processes[i].time_str.day_of_week, "*") != 0) ) {
+			printf("\n'%s' is an invalid day of week\n", processes[i].time_str.day_of_week);
+			exit(EXIT_FAILURE);
+		}
+		
+		if (strcmp(processes[i].time_str.month, "*") != 0) {
+			if ( atoi(processes[i].time_str.day) > getMonthDays(processes[i].time_str.month, strlen(processes[i].time_str.month)) ) {
+				printf("\n'%s' is an invalid day for given month: '%s'\n", processes[i].time_str.day, processes[i].time_str.month);
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+}
+
+
 
 
 int main(int argc, char *argv[]) {
@@ -610,6 +701,8 @@ int main(int argc, char *argv[]) {
 				max = all_proc[i].num_calls;
 			}
 		}
+		
+		time_error(all_proc);
 		
 		printf("\n%s	%i	'most concurrent processes'\n", most_calls, total_invoked);
 		
