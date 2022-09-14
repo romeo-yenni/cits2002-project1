@@ -435,27 +435,6 @@ struct Time timeTick(struct Time time) {
 	return time;
 }
 
-// Combine int values to output string time[] to compare to processes[].
-
-int processChecker(char *time[],char *processes[]) {
-	//char current[20];
-	//char process[20];
-	int value;
-	//value = strcmp(current, process);
-	if (value == 0) {
-		//process is running. Add 1 to total processes. 
-		//Add one to this processCounter. Add to concurrent processes.
-	}
-	else {
-		// process is not running. continue to next process/time.
-	}
-	
-	return 0;
-}
-
-// loop this process in main for each process string then move to next time.
-// pretty naive, better solution? Just use strcmp() in main()?
-
 struct Process * text_to_num(struct Process *processes) {
 	
 	for (int i=0;i<processes[i].num_lines;i++) {
