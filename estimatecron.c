@@ -558,7 +558,7 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 	
 	return processes;
 }
-	
+
 
 
 int main(int argc, char *argv[]) {
@@ -584,12 +584,11 @@ int main(int argc, char *argv[]) {
 		time.days_in_month = num_days;
 		
 		
-				
 		for (int i=0;i<((num_days*24*60)-1);i++) {
 			time = timeTick(time);
 
 			all_proc = number_of_calls(time, all_proc);
-			
+
 			if (time.minute==59 && time.hour==59 && time.day==num_days) {
 				break;
 			}
@@ -611,7 +610,20 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		
-		printf("\n%s	%i	'most concurrent processes'\n", most_calls, total_invoked);
+		int max_concurrent = 0;		
+		/*for (int i=0;i<((num_days*24*60)-1);i++) {
+			time = timeTick(time);
+
+			all_proc = number_of_calls(time, all_proc);
+			//if (all_proc.num_calls > max_concurrent)
+				//max_concurrent = all_proc.num_calls;
+
+			if (time.minute==59 && time.hour==59 && time.day==num_days) {
+				break;
+			}
+		}*/
+
+		printf("\n%s	%i	%i\n", most_calls, total_invoked, max_concurrent);
 		
 		free(all_proc);
 	
@@ -619,4 +631,20 @@ int main(int argc, char *argv[]) {
 	}
 
 	return 0;
+}
+
+///////////////////////////////////////////
+
+int estimate_converter (int estimate) {
+	int est_minutes;
+	int est_hours;
+	int est_days;
+	
+	est_hours = estimate/60;
+	est_minutes = estimate%60;
+
+	est_days = est_hours/24;
+	est_hours = est_hours%24;
+
+	return est_minutes, est_hours, est_days;
 }
