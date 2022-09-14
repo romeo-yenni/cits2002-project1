@@ -610,20 +610,43 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		
-		int max_concurrent = 0;		
-		/*for (int i=0;i<((num_days*24*60)-1);i++) {
+		int arr[20];
+		int most_concurrent = 0;
+
+		for (int i=0;i<((num_days*24*60)-1);i++) {
 			time = timeTick(time);
+			
+			int tick_concurrent = 0;								//tick_concurrent is re-initialized to 0 for the new tick.
 
-			all_proc = number_of_calls(time, all_proc);
-			//if (all_proc.num_calls > max_concurrent)
-				//max_concurrent = all_proc.num_calls;
+			for(int i = 0;i < 20;i++) {								//Decrements all running processes as the tick begins.
+				if (arr[i] != 0) {
+					arr[i]--;
+				}
+			}
 
+			all_proc = number_of_calls(time, all_proc);				//If a process runs on a given tick, its estimate value is initialised in arr[] in an element not containing a running process.
+			if (all_proc[i].num_calls > 0) {
+				for(int j = 0;j < 20;j++) {
+					if (j == 0) {
+						arr[j] = all_proc[i].estimate;
+					}
+				}
+				for(int j = 0;j < 20;j++) {							//For each running process, tick_concurrent is incremented.
+					if (j != 0) {
+						tick_concurrent++;
+						if (most_concurrent < tick_concurrent) {	//If it's value is greater than max_concurrent, max_concureent is overwritten.
+							most_concurrent = tick_concurrent;
+						}
+					}
+				}
+			}
+		
 			if (time.minute==59 && time.hour==59 && time.day==num_days) {
 				break;
 			}
-		}*/
+		}
 
-		printf("\n%s	%i	%i\n", most_calls, total_invoked, max_concurrent);
+		printf("\n%s	%i	%i\n", most_calls, total_invoked, most_concurrent);
 		
 		free(all_proc);
 	
@@ -631,20 +654,4 @@ int main(int argc, char *argv[]) {
 	}
 
 	return 0;
-}
-
-///////////////////////////////////////////
-
-int estimate_converter (int estimate) {
-	int est_minutes;
-	int est_hours;
-	int est_days;
-	
-	est_hours = estimate/60;
-	est_minutes = estimate%60;
-
-	est_days = est_hours/24;
-	est_hours = est_hours%24;
-
-	return est_minutes, est_hours, est_days;
 }
