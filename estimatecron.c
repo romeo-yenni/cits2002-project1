@@ -488,7 +488,7 @@ int get_day_of_week(int d, int m, int y) {
 	return (d += m < 3 ? y-- : y - 2, 23*m/9 + d + 4 + y/4- y/100 + y/400)%7;
 }
 
-// A function that will tick through all the days of a given month argv[] by second.
+// A function that will tick through all the days of a given month argv[] by minute.
 struct Time timeTick(struct Time time) {
 
 	if (time.hour >= 24 || time.minute >= 60) {
@@ -704,28 +704,29 @@ int main(int argc, char *argv[]) {
 		time_error(all_proc);
 		
 		printf("\n%s	%i	'most concurrent processes'\n", most_calls, total_invoked);
+		
 		int arr[20];
 		int most_concurrent = 0;
 
-		for (int i=0;i<((num_days*24*60)-1);i++) {
+		for (int i=0;i<((num_days*24*60)-1);i++) {					//one tick for every minute of the month.
 			time = timeTick(time);
 			
-			int tick_concurrent = 0;								//tick_concurrent is re-initialized to 0 for the new tick.
+			int tick_concurrent = 0;								//tick_concurrent is re-initialized to 0 for each new tick.
 
-			for(int i = 0;i < 20;i++) {								//Decrements all running processes as the tick begins.
-				if (arr[i] != 0) {
-					arr[i]--;
+			for(int j = 0;j < 20;j++) {								//Decrements all running processes by 1 as the tick begins.
+				if (arr[j] != 0) {
+					arr[j] = arr[j] - 1;
 				}
 			}
 
-			all_proc = number_of_calls(time, all_proc);				//If a process runs on a given tick, its estimate value is initialised in arr[] in an element not containing a running process.
+			all_proc = number_of_calls(time, all_proc);				//If a process runs on a tick, its estimate value is initialised in arr[] in an element not containing a running process.
 			if (all_proc[i].num_calls > 0) {
 				for(int j = 0;j < 20;j++) {
 					if (j == 0) {
 						arr[j] = all_proc[i].estimate;
 					}
 				}
-				for(int j = 0;j < 20;j++) {							//For each running process, tick_concurrent is incremented.
+				for(int j = 0;j < 20;j++) {							//For each running process (i > 0), tick_concurrent is incremented.
 					if (j != 0) {
 						tick_concurrent++;
 						if (most_concurrent < tick_concurrent) {	//If it's value is greater than max_concurrent, max_concureent is overwritten.
