@@ -1,3 +1,7 @@
+//  CITS2002 Project 1 2022
+//  Student1:   22982458   GOPCEVIC   NICOLAS
+//  Student2:   21968333   ADLER   HARRY
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,11 +32,21 @@ struct Time {
 };
 
 struct Process {
-	char  name[40];		// process name
+	char  name[40];			// process name
 	int   estimate;			// process length in minutes
    	int num_lines;			// number of processes
 	struct Time_proc time_str;	// holding minutes, hours, day, month, day of week, days in month
 	int num_calls;			// number of times process is invoked
+};
+
+struct Estimate {
+	int minute;			// minutes left over for process
+	int hour;			// hours left over for process
+	int day;			// days left over for process
+};
+
+struct Concurrent {
+	int arr[20];		// contains all processes running on current time tick
 };
 
 struct Process * file_processing(char *crontab, char *estimates) {
@@ -80,6 +94,13 @@ struct Process * file_processing(char *crontab, char *estimates) {
   			        strcpy(cron_processes[cron_clean_line], cron_data[i]);
 				cron_clean_line++;
 			}
+		}
+	}
+	
+	for (int i=0;i<cron_clean_line;i++) {
+		if (strlen(cron_processes[i]) == 1) {
+			printf("\nempty line found\n");
+			exit(EXIT_FAILURE);
 		}
 	}
 	
@@ -157,9 +178,6 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
     		}
     	}
-	
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	// storage for lines from file
 	char esti_data[MAX_LINES][MAX_LEN];
@@ -556,30 +574,60 @@ struct Process * text_to_num(struct Process *processes) {
 	}
 	
 	for (int i=0;i<processes[i].num_lines;i++) {
-		
+	
 		int size = strlen(processes[i].time_str.day_of_week);
+	
+		bool isChar = false;
 		
-		if (size >= 3) {
+		bool isUp = false;
+		
+		bool isNum = false;
 
-			if (strcmp(processes[i].time_str.day_of_week, "sun") == 0)
-				strcpy(processes[i].time_str.day_of_week, "0");
-			else if (strcmp(processes[i].time_str.day_of_week, "mon") == 0)	
-				strcpy(processes[i].time_str.day_of_week, "1");		
-			else if (strcmp(processes[i].time_str.day_of_week, "tue") == 0)		
-				strcpy(processes[i].time_str.day_of_week, "2");
-			else if (strcmp(processes[i].time_str.day_of_week, "wed") == 0)
-				strcpy(processes[i].time_str.day_of_week, "3");
-			else if (strcmp(processes[i].time_str.day_of_week, "thu") == 0)
-				strcpy(processes[i].time_str.day_of_week, "4");
-			else if (strcmp(processes[i].time_str.day_of_week, "fri") == 0)
-				strcpy(processes[i].time_str.day_of_week, "5");
-			else if (strcmp(processes[i].time_str.day_of_week, "sat") == 0)
-				strcpy(processes[i].time_str.day_of_week, "6");
+		for (int j=0;j<size;j++) {
+			if (isalpha(processes[i].time_str.day_of_week[j]) != 0) {
+				isChar = true;
+			}
+			if (isupper(processes[i].time_str.day_of_week[j]) != 0) {
+				isUp = true;
+			}
+			if (isdigit(processes[i].time_str.day_of_week[j]) != 0) {
+				isNum = true;
+			}
+		}
+		
+		if (isUp==true) {
+			printf("\n'%s' is an invalid day of week\n", processes[i].time_str.day_of_week);
+			exit(EXIT_FAILURE);
+		}
+		if ( (isNum==true) && (isChar==true) ) {
+			printf("\n'%s' is an invalid day of week\n", processes[i].time_str.day_of_week);
+			exit(EXIT_FAILURE);
+		}
+		
+		if (isChar == true) {
 			
+			if (size == 3) {
+
+				if (strcmp(processes[i].time_str.day_of_week, "sun") == 0)
+					strcpy(processes[i].time_str.day_of_week, "0");
+				else if (strcmp(processes[i].time_str.day_of_week, "mon") == 0)	
+					strcpy(processes[i].time_str.day_of_week, "1");		
+				else if (strcmp(processes[i].time_str.day_of_week, "tue") == 0)		
+					strcpy(processes[i].time_str.day_of_week, "2");
+				else if (strcmp(processes[i].time_str.day_of_week, "wed") == 0)
+					strcpy(processes[i].time_str.day_of_week, "3");
+				else if (strcmp(processes[i].time_str.day_of_week, "thu") == 0)
+					strcpy(processes[i].time_str.day_of_week, "4");
+				else if (strcmp(processes[i].time_str.day_of_week, "fri") == 0)
+					strcpy(processes[i].time_str.day_of_week, "5");
+				else if (strcmp(processes[i].time_str.day_of_week, "sat") == 0)
+					strcpy(processes[i].time_str.day_of_week, "6");
+			}
 			else {
 				printf("\n'%s' is an invalid day of the week\n", processes[i].time_str.day_of_week);
 				exit(EXIT_FAILURE);
 			}
+			
 		}
 	}
 	
@@ -602,8 +650,8 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 						if ( (time.hour == atoi(processes[i].time_str.hour)) || (strcmp(processes[i].time_str.hour, "*") == 0) ) {
 						
 							if ( (time.minute == atoi(processes[i].time_str.minute)) || (strcmp(processes[i].time_str.minute, "*") == 0) ) {
-								
 								processes[i].num_calls++;
+								
 							}
 						}
 					}						  
@@ -649,8 +697,65 @@ void time_error(struct Process *processes) {
 	}
 }
 
+struct Estimate estimate_to_time(int estimate, int days_in_month) {
+	
+	struct Estimate time_left;
+	
+	
+	if (estimate < (60)) {
+		time_left.minute = estimate;
+		time_left.hour = 0;
+		time_left.day = 0;
+	}
+	if ( (estimate < (60*24)) && (estimate > 60) ) {
+		time_left.hour = ( estimate / 60 );
+		time_left.minute = ( estimate - (time_left.hour*60) );
+		time_left.day = 0;
+	}
+	if ( (estimate < (60*24*days_in_month)) && (estimate > (60*24)) ) {		
+		time_left.day = ( estimate / (60*24) );
+		time_left.hour = ( (estimate - (time_left.day*24*60)) / 60 );
+		time_left.minute = ( estimate - ( (time_left.day*24*60) + (time_left.hour*60) ) );
+	}
+	if ( estimate > (60*24*days_in_month) ) {
+		printf("\n '%i' is too large of an estimate for given month\n", estimate);
+		exit(EXIT_FAILURE);
+	}
+	
+	return time_left;
+}
 
-
+struct Concurrent concurrent_count(struct Concurrent concurrent, struct Time time, struct Process *processes) {
+	
+	for (int i=0;i<processes[i].num_lines;i++) {
+	
+		if (strcmp(processes[i].name, "0") != 0 ) {
+		
+			if ( (time.day_of_week == atoi(processes[i].time_str.day_of_week)) || strcmp(processes[i].time_str.day_of_week, "*") == 0) {
+			
+				if ( (time.month == atoi(processes[i].time_str.month)) || strcmp(processes[i].time_str.month, "*") == 0) {
+				
+					if ( (time.day == atoi(processes[i].time_str.day)) || (strcmp(processes[i].time_str.day, "*") == 0) ) {
+					
+						if ( (time.hour == atoi(processes[i].time_str.hour)) || (strcmp(processes[i].time_str.hour, "*") == 0) ) {
+						
+							if ( (time.minute == atoi(processes[i].time_str.minute)) || (strcmp(processes[i].time_str.minute, "*") == 0) ) {
+								for (int j=0;j<20;j++) {
+									if (concurrent.arr[j] == -1) {
+										concurrent.arr[j] = processes[i].estimate;
+										break;
+									}
+								}						
+							}
+						}
+					}						  
+				}
+			}
+		}
+	}
+	
+	return concurrent;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -674,11 +779,60 @@ int main(int argc, char *argv[]) {
 		time.month = atoi(argv[1]);
 		time.days_in_month = num_days;
 		
+		int max_concurrent = 0;
+		
+		struct Concurrent concurrent;
+		for (int i=0;i<20;i++) {
+			concurrent.arr[i] = -1;
+		}
+		
+		all_proc = number_of_calls(time, all_proc);
+		
+		concurrent = concurrent_count(concurrent, time, all_proc);
+		
+		for (int x=0;x<20;x++) {
+			if (concurrent.arr[x] == 0) {
+				concurrent.arr[x] = -1;
+			}
+		}
+			
+		for (int j=0;j<20;j++) {
+			if (concurrent.arr[j]!=-1) {
+					concurrent.arr[j]--;
+			}
+		}
 		
 		for (int i=0;i<((num_days*24*60)-1);i++) {
+		
+			int temp = 0;
+
 			time = timeTick(time);
 
 			all_proc = number_of_calls(time, all_proc);
+			
+			concurrent = concurrent_count(concurrent, time, all_proc);
+			
+			for (int x=0;x<20;x++) {
+				if (concurrent.arr[x] == 0) {
+					concurrent.arr[x] = -1;
+				}
+			}
+			
+			for (int j=0;j<20;j++) {
+				if (concurrent.arr[j]!=-1) {
+					concurrent.arr[j]--;
+				}
+			}
+			
+			for (int z=0;z<20;z++) {
+				if (concurrent.arr[z]!=-1) {
+					temp++;
+				}
+			}
+			
+			if (temp>max_concurrent) {
+				max_concurrent = temp;
+			}
 
 			if (time.minute==59 && time.hour==59 && time.day==num_days) {
 				break;
@@ -703,45 +857,7 @@ int main(int argc, char *argv[]) {
 		
 		time_error(all_proc);
 		
-		printf("\n%s	%i	'most concurrent processes'\n", most_calls, total_invoked);
-		
-		int arr[20];
-		int most_concurrent = 0;
-
-		for (int i=0;i<((num_days*24*60)-1);i++) {					//one tick for every minute of the month.
-			time = timeTick(time);
-			
-			int tick_concurrent = 0;								//tick_concurrent is re-initialized to 0 for each new tick.
-
-			for(int j = 0;j < 20;j++) {								//Decrements all running processes by 1 as the tick begins.
-				if (arr[j] != 0) {
-					arr[j] = arr[j] - 1;
-				}
-			}
-
-			all_proc = number_of_calls(time, all_proc);				//If a process runs on a tick, its estimate value is initialised in arr[] in an element not containing a running process.
-			if (all_proc[i].num_calls > 0) {
-				for(int j = 0;j < 20;j++) {
-					if (j == 0) {
-						arr[j] = all_proc[i].estimate;
-					}
-				}
-				for(int j = 0;j < 20;j++) {							//For each running process (i > 0), tick_concurrent is incremented.
-					if (j != 0) {
-						tick_concurrent++;
-						if (most_concurrent < tick_concurrent) {	//If it's value is greater than max_concurrent, max_concureent is overwritten.
-							most_concurrent = tick_concurrent;
-						}
-					}
-				}
-			}
-		
-			if (time.minute==59 && time.hour==59 && time.day==num_days) {
-				break;
-			}
-		}
-
-		printf("\n%s	%i	%i\n", most_calls, total_invoked, most_concurrent);
+		printf("\n%s	%i	%i\n", most_calls, total_invoked, max_concurrent);
 		
 		free(all_proc);
 	
