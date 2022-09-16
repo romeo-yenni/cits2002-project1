@@ -294,6 +294,17 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
 		}
 	}
+	
+	//checking for bad estimates
+	for (int i=0;i<esti_clean_line;i++) {
+		for (int j=0;j<strlen(esti_times[i]);j++ ) {
+			if (isalpha(esti_times[i][j]) != 0) {
+				printf("\n'%s' is an invalid estimate\n", esti_times[i]);
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	
 	// allocating memory for an array of structs and initialising below
 	struct Process *all_proc = malloc(sizeof(struct Process) * cron_clean_line);
 	
