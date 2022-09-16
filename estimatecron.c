@@ -225,6 +225,14 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
 		}
 	}
+
+	// checking for empty lines in estimates-file
+	for (int i=0;i<esti_clean_line;i++) {
+		if (strlen(esti_processes[i]) == 1) {
+			printf("\nempty line found\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 	
 	char esti_names[esti_clean_line][40];
     	for (int z=0;z<esti_clean_line;z++) {
