@@ -502,6 +502,7 @@ int getMonthDays(char *argv, int size) {
 	return 0;
 }
 
+//A function to calculate the day of the week based on a given day/month/year.
 int get_day_of_week(int d, int m, int y) {
 	return (d += m < 3 ? y-- : y - 2, 23*m/9 + d + 4 + y/4- y/100 + y/400)%7;
 }
@@ -533,6 +534,7 @@ struct Time timeTick(struct Time time) {
 	return time;
 }
 
+// A function to check command line inputs for strings, test if they are valid and convert to numerical representation.
 struct Process * text_to_num(struct Process *processes) {
 	
 	for (int i=0;i<processes[i].num_lines;i++) {
@@ -634,7 +636,7 @@ struct Process * text_to_num(struct Process *processes) {
 	return processes;
 }
 
-
+//A function to count the number of times each process is called in a given minute.
 struct Process * number_of_calls(struct Time time, struct Process *processes) {
 
 	for (int i=0;i<processes[i].num_lines;i++) {
@@ -663,6 +665,7 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 	return processes;
 }
 
+//A function to check the validity of a given time layout in a struct time_str.
 void time_error(struct Process *processes) {
 
 	for (int i=0;i<processes[i].num_lines;i++) {
@@ -697,6 +700,7 @@ void time_error(struct Process *processes) {
 	}
 }
 
+//A function to convert a given estimate in total minutes into struct broken down into days, hours and minutes.
 struct Estimate estimate_to_time(int estimate, int days_in_month) {
 	
 	struct Estimate time_left;
@@ -725,6 +729,7 @@ struct Estimate estimate_to_time(int estimate, int days_in_month) {
 	return time_left;
 }
 
+//A function to check the number of concurrently running processes in a given minute.
 struct Concurrent concurrent_count(struct Concurrent concurrent, struct Time time, struct Process *processes) {
 	
 	for (int i=0;i<processes[i].num_lines;i++) {
@@ -757,6 +762,9 @@ struct Concurrent concurrent_count(struct Concurrent concurrent, struct Time tim
 	return concurrent;
 }
 
+/*The driver function to simulate the processes running in a given month, 
+outputting the name of the most frequently used command, the total number of commands invoked, 
+and the maximum number of commands running at any given time.*/
 int main(int argc, char *argv[]) {
 
 	if (argc != 4) {
