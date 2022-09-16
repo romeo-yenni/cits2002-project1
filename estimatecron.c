@@ -49,6 +49,7 @@ struct Concurrent {
 	int arr[20];		// contains all processes running on current time tick
 };
 
+// read both files and store data in Process struct
 struct Process * file_processing(char *crontab, char *estimates) {
 
 	// storage for lines from file
@@ -81,7 +82,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 	char cron_processes[MAX_LINES][MAX_LEN];
 	
 	int cron_clean_line = 0;
-	
+	// cleaning out comments
 	for (int i=0;i<cron_line;i++) {
 		for (int j = 0; j < MAX_LINES; j++) {
 			if (cron_data[i][j] == ' ') {
@@ -96,7 +97,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
 		}
 	}
-	
+	// checking for empty lines in crontab-file
 	for (int i=0;i<cron_clean_line;i++) {
 		if (strlen(cron_processes[i]) == 1) {
 			printf("\nempty line found\n");
@@ -108,7 +109,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 	for (int z=0;z<cron_clean_line;z++) {
   		cron_times[z][0] = '\0';
 	}
-
+	// collecting start times from crontab-file
 	for (int z=0;z<cron_clean_line;z++) {
 		int x = 0;
 		int space_counter = 0;
@@ -138,7 +139,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
     	for (int z=0;z<cron_clean_line;z++) {
     		cron_names[z][0] = '\0';
     	}
-    	
+    	// collecting process names from crontab-file
 	for (int z=0;z<cron_clean_line;z++) {
 		int x = 0;
 		int space_counter = 0;
@@ -209,7 +210,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 	char esti_processes[MAX_LINES][MAX_LEN];
 	
 	int esti_clean_line = 0;
-	
+	// cleaning comments from estimates
 	for (int i=0;i<esti_line;i++) {
 		for (int j = 0; j < MAX_LINES; j++) {
 			if (esti_data[i][j] == ' ') {
@@ -229,7 +230,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
     	for (int z=0;z<esti_clean_line;z++) {
     		esti_names[z][0] = '\0';
     	}
-    	
+    	// collecting process names from estimates
 	for (int z=0;z<esti_clean_line;z++) {
 		int x = 0;
 		int space_counter = 0;
@@ -249,7 +250,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
     	for (int z=0;z<esti_clean_line;z++) {
     		esti_times[z][0] = '\0';
     	}
-    	
+    	// collecting estimates
 	for (int z=0;z<esti_clean_line;z++) {
 		int x = 0;
 		int space_counter = 0;
@@ -285,7 +286,7 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
 		}
 	}
-
+	// allocating memory for an array of structs and initialising below
 	struct Process *all_proc = malloc(sizeof(struct Process) * cron_clean_line);
 	
 	for (int i=0;i<cron_clean_line;i++) {
@@ -358,14 +359,14 @@ struct Process * file_processing(char *crontab, char *estimates) {
 			}
 		}
 	}
-	
+	// checking if crontab process is found in estimates-file
 	for (int i=0;i<cron_clean_line;i++) {
 		if (all_proc[i].estimate == 0) {
 			printf("\n'%s' is an unknown command\n", all_proc[i].name);
 			exit(EXIT_FAILURE);
 		}
 	}
-	
+	// cleaning out empty lines
 	int p=5;
 	while ( (p>(cron_clean_line)-1) && (p<400) ) {
 		strcpy(all_proc[p].name, "0");
@@ -652,8 +653,7 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 						if ( (time.hour == atoi(processes[i].time_str.hour)) || (strcmp(processes[i].time_str.hour, "*") == 0) ) {
 						
 							if ( (time.minute == atoi(processes[i].time_str.minute)) || (strcmp(processes[i].time_str.minute, "*") == 0) ) {
-								processes[i].num_calls++;
-								
+								processes[i].num_calls++;	
 							}
 						}
 					}						  
@@ -669,6 +669,33 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 void time_error(struct Process *processes) {
 
 	for (int i=0;i<processes[i].num_lines;i++) {
+	
+		int size_min = strlen(processes[i].time_str.minute);
+
+		for (int j=0;j<size_min;j++) {
+			if (isalpha(processes[i].time_str.minute[j]) != 0) {
+				printf("\n'%s' is an invalid minute\n", processes[i].time_str.minute);
+				exit(EXIT_FAILURE);
+			}
+		}
+		
+		int size_hour = strlen(processes[i].time_str.hour);
+
+		for (int j=0;j<size_hour;j++) {
+			if (isalpha(processes[i].time_str.hour[j]) != 0) {
+				printf("\n'%s' is an invalid hour\n", processes[i].time_str.hour);
+				exit(EXIT_FAILURE);
+			}
+		}
+		
+		int size_day = strlen(processes[i].time_str.day);
+
+		for (int j=0;j<size_day;j++) {
+			if (isalpha(processes[i].time_str.day[j]) != 0) {
+				printf("\n'%s' is an invalid day\n", processes[i].time_str.day);
+				exit(EXIT_FAILURE);
+			}
+		}
 	
 		if ( ( 0 > atoi(processes[i].time_str.minute) || atoi(processes[i].time_str.minute) > 59) && (strcmp(processes[i].time_str.minute, "*") != 0) ) {
 			printf("\n'%s' is an invalid minute\n", processes[i].time_str.minute);
