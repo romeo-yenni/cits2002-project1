@@ -661,7 +661,7 @@ struct Process * number_of_calls(struct Time time, struct Process *processes) {
 			}
 		}
 	}
-	
+
 	return processes;
 }
 
@@ -773,13 +773,13 @@ int main(int argc, char *argv[]) {
 	}
 	if (argc == 4) {
 	
-		int num_days = getMonthDays(argv[1], strlen(argv[1]));
+		int num_days = getMonthDays(argv[1], strlen(argv[1]));					//Determine number of days in month.
 		
-		struct Process *all_proc = file_processing(argv[2], argv[3]); 		
+		struct Process *all_proc = file_processing(argv[2], argv[3]); 			//Read chrontab and estimates information.
 		
-		all_proc = text_to_num(all_proc);
+		all_proc = text_to_num(all_proc);										//Clean possible varied inputs.
 
-		struct Time time;
+		struct Time time;														//Initialize time at beginning of month, for given number of days.
 		
 		time.minute = 0;
 		time.hour = 0;
@@ -787,18 +787,18 @@ int main(int argc, char *argv[]) {
 		time.month = atoi(argv[1]);
 		time.days_in_month = num_days;
 		
-		int max_concurrent = 0;
+		int max_concurrent = 0;													//Variable to store current highest concurrent processes.
 		
-		struct Concurrent concurrent;
+		struct Concurrent concurrent;											//Initialize struct concurrent to hodl an array tracking processes concurrently running.
 		for (int i=0;i<20;i++) {
-			concurrent.arr[i] = -1;
+			concurrent.arr[i] = -1;												//-1 if there is no process running.
 		}
 		
 		all_proc = number_of_calls(time, all_proc);
 		
 		concurrent = concurrent_count(concurrent, time, all_proc);
 		
-		for (int x=0;x<20;x++) {
+		for (int x=0;x<20;x++) {												//Before the next tick, for all processes that are running, decrement by one.
 			if (concurrent.arr[x] == 0) {
 				concurrent.arr[x] = -1;
 			}
@@ -810,7 +810,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		
-		for (int i=0;i<((num_days*24*60)-1);i++) {
+		for (int i=0;i<((num_days*24*60)-1);i++) {								//Loop to tick through all seconds in a month.
 		
 			int temp = 0;
 
@@ -818,7 +818,7 @@ int main(int argc, char *argv[]) {
 
 			all_proc = number_of_calls(time, all_proc);
 			
-			concurrent = concurrent_count(concurrent, time, all_proc);
+			concurrent = concurrent_count(concurrent, time, all_proc);			//Tracks the number of processes concurrently running, at a given tick.
 			
 			for (int x=0;x<20;x++) {
 				if (concurrent.arr[x] == 0) {
@@ -838,7 +838,7 @@ int main(int argc, char *argv[]) {
 				}
 			}
 			
-			if (temp>max_concurrent) {
+			if (temp>max_concurrent) {											//Check if this tick has more concurrent processes than the last, update if it does.
 				max_concurrent = temp;
 			}
 
@@ -846,26 +846,31 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 		}
+
+		if (max_concurrent > 20) {												//Test to make sure there are no more than 20 concurrent processes running.
+			printf(" '%i' is too many concurrent processes running. Maximum of 20 simultaneous processes.\n", max_concurrent);
+			exit(EXIT_FAILURE);
+		}
 		
-		int total_invoked = 0;
+		int total_invoked = 0;													//Variable to store total number of processes called.
 		
-		char most_calls[100] = "\0";
+		char most_calls[100] = "\0";											//Variable to store the name of the most called process.
 		
 		int max = 0;
 		
 		for (int i=0;i<all_proc[i].num_lines;i++) {
 		
-			total_invoked = total_invoked + all_proc[i].num_calls;
+			total_invoked = total_invoked + all_proc[i].num_calls;				//Add together all instances of processes being called to find total calls.
 			
 			if (all_proc[i].num_calls > max) {
-				strcpy(most_calls, all_proc[i].name);
+				strcpy(most_calls, all_proc[i].name);							//For the process called the most, copy its name to most_calls
 				max = all_proc[i].num_calls;
 			}
 		}
 		
 		time_error(all_proc);
 		
-		printf("\n%s	%i	%i\n", most_calls, total_invoked, max_concurrent);
+		printf("\n%s	%i	%i\n", most_calls, total_invoked, max_concurrent); 	//Print most_called, total_invoked, max_concurrent seperated by whitespace.
 		
 		free(all_proc);
 	
